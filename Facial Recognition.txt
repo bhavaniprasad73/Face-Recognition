@@ -1,0 +1,174 @@
+%img = imread('32.pgm');                       %input image for the facial recognition checking
+%H=img(:);                                       %taking the input image values in the single column matrix
+%imshow(img); title('Input face image');                                   %displaying the input query face image
+%-------------- ------------------
+
+%Enter the image number L = as input query image want to test
+
+%-------------------------------------------
+% k=23;
+% filename3 = [sdirectory  '/' tifffiles(k).name];
+% Input = imread(filename3);
+% H= Input(:);
+
+%sdirectory = 'Sample';
+%tifffiles = dir([sdirectory '/*.tif']);
+%for k = 1:length(tifffiles)
+%filename = [sdirectory '/' tifffiles(k).name];
+%I = imread(filename);
+% operations on "I"
+% end
+
+%d= images(:);
+%A=horzcat(d, image(i));
+%----------------------------------------Database of images ---------------------------------------
+
+sdirectory = 'C:/Users/ebhavaniprasad/Desktop/Semester_Project/att_faces/s1';
+tifffiles = dir([sdirectory '/*.pgm']);
+
+files={tifffiles.name};
+for k = 1:length(files)
+filename = [sdirectory  '/' tifffiles(k).name];
+I = imread(filename);
+
+A(:,k)=I(:);                                                      % Forming A matrix that contains the database of the all images values
+%sum=I(:);
+%average=sum/400;
+%C=horzcat(C,A);
+end
+title('Enter the number for the input query image you want to test');
+L=200;                   % number between [1- 400]
+filename3 = [sdirectory  '/' tifffiles(L).name];
+Input = imread(filename3);
+H= Input(:);
+imshow(Input); title('The Input query face image');
+
+%-------------------------------------- computing Average matrix-----------
+% disp(double(A)); 
+final_sum=sum(A,2);      % sum of all the eigen faces of database of images
+avg= (final_sum/400);     % average faces
+
+% ------------------------Adjusted matrix ---------------------------------
+adjust= double(A) - avg;              % adjusted images
+temp= transpose(adjust);             % transpose of the adjusted images
+
+%---------------------------------Computing Covariance matrix -------------
+covar= temp*adjust;                 % covarianace matrix
+covariance= (covar/400);            % Covariance matrix divided by total images
+
+% -------------------- Eigen Vectors and Eigen Values---------------------
+[V, D]= eig(covariance);             % Eigen vectors and the diagonal vector
+%Finding the eigen vectors along the high variation of the eigen value
+ d1=diag(D);
+ [d1,s3]=sort(-d1);
+ V=V(:,s3);
+
+%eFaces= V*temp;                     %check here
+% Ui= A* V;
+for i1=1:size(V,1)
+     vect=V(i1,:);   
+     eface(i1,:)=vect*temp;
+end
+% disp(eface);
+%eface5=vect*temp;                %eigen faces of each vector
+
+%----------------------------Eigen faces for the training faces------------
+eface2 = adjust*V;                   % Original eigen faces of the original face images
+%title('Eigen faces of the original database of faces');
+%eface3=adjust*V;                   %right eigen vectors of the covarance matrix
+
+%-------------------  Adjusted matrix for the input query face-------------------
+ Iod=double(H)-avg;                 %adjusted matrix for input image
+ %for m=1:size(eface,)
+ eface4=transpose(eface2);
+ 
+ %-------------------------- Eigen Weights for the test set or input query
+ %face----------------
+ for y=1:size(eface4,1)
+ wt1=eface4(y,1)*Iod;
+ end
+ inputweight= A(:,k);
+ Iadjust= double(inputweight)- avg;
+ %-----------------------Computing weight for th input query face----------
+ w1= eface4*Iadjust; 
+ [value1,index1]=max(w1);
+ 
+ sum_weight=V*w1;
+ eigen_space= eface2*w1; 
+ %------------calculating each weight by multiplying with the eigen face ----- 
+ for j=1:size(eface4,1)
+ weight(j,:)= eface4(j,:)*Iod;
+ w3=sum(weight,2);
+ end
+ 
+ %-----------------------------Computing the Euclidean distance ----------
+ 
+ distance= abs(Iod-eigen_space);
+ 
+ [value, index] = min(distance(:));
+ %----------------------------------------Computing weights for the training faces-------------------------
+ 
+
+ for j=1:size(eface4,1)
+ weight2(j,:)= eface4(j,:)*adjust;
+ end
+ 
+ weight_diff= weight-weight2;
+ [row,col] = find(weight_diff==0); % the matched face has zero weight difference and find the position using columns
+ recog_img= col(1,1);              %finding the index of the matched face in set of trained images      
+ disp(recog_img);
+ 
+ 
+  
+% aw2=sum(aw,2);
+ %[value3, index3]= min(aw2);
+ %---------------------------Comparing the weights of the query face with the trained faces------- 
+ %diff=abs(iw)- w1;
+ %[a,p]=min(diff(:));           %finding the index of minimum eigen weight of matched face 
+ 
+ %p2= find(min(diff(:)));
+ n=1;
+ for m=1:size(eface4,1)
+     t= weight(n,:)*eface4(:,m); 
+     %n=n+1;
+ end
+ n=n+1;
+ for l=1: size(A,2)
+     for m1=1:size(eface4,1)
+     im1=A(:,l);
+     image1(:,l)=double(im1)-avg;         % adjust matrix of database of faces
+     Weight2(:,m1)=eface4(m1,:)*image1(:,l);
+     end
+  end
+ % disp(image1);
+ for m1=1:size(eface4,1)
+     Weight3=eface4(m1,:)*image1;
+ end
+
+ %d1= A(:,p);
+ %d=mat2gray(d1);
+ %figure
+ %imagesc(d1);
+  disp(recog_img);
+ filename = [sdirectory  '/' tifffiles(recog_img).name];
+ I3= imread(filename);
+ figure
+%imshow(I3); title('The correct match');
+subplot(1,2,1); imshow(Input);title('Input query face');
+subplot(1,2,2); imshow(I3); title('Match found');
+
+ 
+% folder='C:/Users/ebhavaniprasad/Desktop/semProject/att_faces/s1/';
+% I=dir(fullfile(folder,'1.pgm'));
+% for k=1:numel(I)
+%   filename=fullfile(folder,I(k).name);
+%   I2{k}=imread(filename);
+% end
+
+filename2 = [sdirectory  '/' tifffiles(recog_img).name];
+img2= imread(filename2);
+H1=img2(:);
+figure
+imshow(img2); title('correct match face');
+
+% cv= crossval(fitctree,'Leaveout',0.1);
